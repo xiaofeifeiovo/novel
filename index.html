@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说下载与翻译工具</title>
+    <style>
+        :root {
+            --primary-color: #8ab4f8;
+            --primary-hover: #9cc0ff;
+            --secondary-color: #9aa0a6;
+            --success-color: #34a853;
+            --danger-color: #ea4335;
+            --warning-color: #fbbc05;
+            --dark-bg: #202124;
+            --darker-bg: #17181a;
+            --card-bg: #2d2e31;
+            --light-text: #e8eaed;
+            --medium-text: #9aa0a6;
+            --border-color: #5f6368;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--light-text);
+            background-color: var(--dark-bg);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            color: var(--light-text);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--medium-text);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 300px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 i {
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--light-text);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.3);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: #202124;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: #202124;
+        }
+
+        .btn-secondary:hover {
+            background-color: #adb5bd;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #40c463;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: #202124;
+        }
+
+        .btn-warning:hover {
+            background-color: #ffd93b;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff6b6b;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: var(--darker-bg);
+            display: none;
+        }
+
+        .result.success {
+            border-left: 4px solid var(--success-color);
+            background-color: rgba(52, 168, 83, 0.15);
+        }
+
+        .result.error {
+            border-left: 4px solid var(--danger-color);
+            background-color: rgba(234, 67, 53, 0.15);
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            color: var(--light-text);
+        }
+
+        .result p {
+            margin-bottom: 10px;
+        }
+
+        .instructions {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .instructions h2 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .instructions code {
+            background-color: var(--darker-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px 0;
+            color: var(--medium-text);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .card {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>小说下载与翻译工具</h1>
+        <p class="subtitle">下载网页小说并自动翻译为中文</p>
+    </header>
+
+    <div class="container">
+        <!-- 单个小说下载 -->
+        <div class="card">
+            <h2>📚 单个小说下载</h2>
+            <form id="downloadForm">
+                <div class="form-group">
+                    <label for="novelUrl">小说目录页或章节页URL</label>
+                    <input type="url" id="novelUrl" name="novelUrl" required placeholder="https://example.com/novel/catalog">
+                </div>
+                
+                <div class="form-group">
+                    <label for="outputFile">输出文件名 (可选)</label>
+                    <input type="text" id="outputFile" name="outputFile" placeholder="默认自动生成">
+                </div>
+                
+                <div class="form-group">
+                    <label for="chapterRange">章节范围 (可选)</label>
+                    <input type="text" id="chapterRange" name="chapterRange" placeholder="例如: 1-10 或 5">
+                </div>
+                
+                <button type="submit" class="btn btn-block">下载并翻译小说</button>
+            </form>
+            
+            <div id="downloadResult" class="result">
+                <h3>执行结果</h3>
+                <p id="downloadMessage"></p>
+            </div>
+        </div>
+
+        <!-- 批量请求生成 -->
+        <div class="card">
+            <h2>⚙️ 批量请求生成</h2>
+            <form id="batchGenerateForm">
+                <div class="form-group">
+                    <label for="catalogUrl">小说目录页URL</label>
+                    <input type="url" id="catalogUrl" name="catalogUrl" required placeholder="https://example.com/novel/catalog">
+                </div>
+                
+                <div class="form-group">
+                    <label for="batchOutputFile">输出批处理文件名 (可选)</label>
+                    <input type="text" id="batchOutputFile" name="batchOutputFile" placeholder="默认: batch_requests.json">
+                </div>
+                
+                <button type="submit" class="btn btn-block btn-secondary">生成批处理请求</button>
+            </form>
+            
+            <div id="batchGenerateResult" class="result">
+                <h3>执行结果</h3>
+                <p id="batchGenerateMessage"></p>
+            </div>
+        </div>
+
+        <!-- 批量请求发送 -->
+        <div class="card">
+            <h2>🚀 批量请求发送</h2>
+            <form id="batchSendForm">
+                <div class="form-group">
+                    <label for="batchFile">批处理请求文件</label>
+                    <input type="text" id="batchFile" name="batchFile" required placeholder="batch_requests.json">
+                </div>
+                
+                <div class="form-group">
+                    <label for="batchResponseFile">输出响应文件名 (可选)</label>
+                    <input type="text" id="batchResponseFile" name="batchResponseFile" placeholder="默认: batch_response.json">
+                </div>
+                
+                <button type="submit" class="btn btn-block btn-success">发送批处理请求</button>
+            </form>
+            
+            <div id="batchSendResult" class="result">
+                <h3>执行结果</h3>
+                <p id="batchSendMessage"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2>使用说明</h2>
+        <ul>
+            <li><strong>单个小说下载</strong>：输入小说的目录页或章节页URL，可选择指定输出文件名和章节范围</li>
+            <li><strong>批量请求生成</strong>：输入小说目录页URL，生成批处理请求文件用于后续翻译</li>
+            <li><strong>批量请求发送</strong>：将生成的批处理请求文件发送到阿里云百炼平台进行翻译</li>
+        </ul>
+        <p>注意：使用翻译功能需要设置阿里云百炼平台的API密钥环境变量 <code>DASHSCOPE_API_KEY</code></p>
+    </div>
+
+    <footer>
+        <p>小说下载与翻译工具 &copy; 2025</p>
+    </footer>
+
+    <script>
+        // 处理表单提交
+        document.getElementById('downloadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('novelUrl').value;
+            const outputFile = document.getElementById('outputFile').value;
+            const chapterRange = document.getElementById('chapterRange').value;
+            
+            // 显示处理中状态
+            const resultDiv = document.getElementById('downloadResult');
+            const messageElement = document.getElementById('downloadMessage');
+            resultDiv.className = 'result';
+            messageElement.textContent = '正在处理中...';
+            resultDiv.style.display = 'block';
+            
+            // 这里应该调用后端API或执行Python脚本
+            // 暂时模拟处理过程
+            setTimeout(() => {
+                resultDiv.classList.add('success');
+                messageElement.innerHTML = `
+                    小说下载完成！<br>
+                    URL: ${url}<br>
+                    ${outputFile ? `输出文件: ${outputFile}<br>` : ''}
+                    ${chapterRange ? `章节范围: ${chapterRange}<br>` : ''}
+                    <br>
+                    注意：实际应用中需要后端支持来执行Python脚本。
+                `;
+            }, 2000);
+        });
+        
+        document.getElementById('batchGenerateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('catalogUrl').value;
+            const outputFile = document.getElementById('batchOutputFile').value;
+            
+            const resultDiv = document.getElementById('batchGenerateResult');
+            const messageElement = document.getElementById('batchGenerateMessage');
+            resultDiv.className = 'result';
+            messageElement.textContent = '正在处理中...';
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.classList.add('success');
+                messageElement.innerHTML = `
+                    批处理请求生成完成！<br>
+                    目录页URL: ${url}<br>
+                    ${outputFile ? `输出文件: ${outputFile}<br>` : '输出文件: batch_requests.json<br>'}
+                    <br>
+                    注意：实际应用中需要后端支持来执行Python脚本。
+                `;
+            }, 2000);
+        });
+        
+        document.getElementById('batchSendForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const batchFile = document.getElementById('batchFile').value;
+            const responseFile = document.getElementById('batchResponseFile').value;
+            
+            const resultDiv = document.getElementById('batchSendResult');
+            const messageElement = document.getElementById('batchSendMessage');
+            resultDiv.className = 'result';
+            messageElement.textContent = '正在处理中...';
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.classList.add('success');
+                messageElement.innerHTML = `
+                    批处理请求发送完成！<br>
+                    请求文件: ${batchFile}<br>
+                    ${responseFile ? `响应文件: ${responseFile}<br>` : '响应文件: batch_response.json<br>'}
+                    <br>
+                    注意：实际应用中需要后端支持来执行Python脚本。
+                `;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
