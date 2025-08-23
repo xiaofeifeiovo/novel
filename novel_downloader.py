@@ -9,10 +9,17 @@ import os
 from urllib.parse import urljoin, urlparse
 import argparse
 import json
+from openai import OpenAI
 
 # 阿里云百炼平台的API密钥和模型名称
 DASHSCOPE_API_KEY = os.getenv('DASHSCOPE_API_KEY')  # 从环境变量读取API密钥
-MODEL_NAME = "qwen-turbo-latest"
+DEFAULT_MODEL = "qwen-mt-plus"  # 默认使用qwen-mt-plus模型
+
+# 初始化OpenAI客户端用于qwen-mt-plus模型
+client = OpenAI(
+    api_key=DASHSCOPE_API_KEY,
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+)
 
 def is_chinese(text):
     """检查文本是否包含中文字符"""
@@ -71,7 +78,7 @@ def is_likely_japanese(text):
     
     return False
 
-def translate_to_chinese(text):
+def translate_to_chinese(text, model_name=DEFAULT_MODEL):
     """使用阿里云百炼平台的Qwen模型将文本翻译为中文"""
     if not text:
         return text
@@ -88,59 +95,131 @@ def translate_to_chinese(text):
         print("内容已为中文，无需翻译")
         return text
     
-    try:
-        import dashscope
-        dashscope.api_key = DASHSCOPE_API_KEY
+    # 如果可能是日文，则进行翻译
+    if likely_japanese or not has_chinese:
+        print("开始翻译...")
         
-        # 如果可能是日文，则进行翻译
-        if likely_japanese or not has_chinese:
-            print("开始翻译...")
-            # 只取前1000个字符进行测试
-            test_text = text[:1000] + "..." if len(text) > 1000 else text
-            print(f"待翻译文本示例: {test_text}")
-            
-            # 使用标准Generation接口，但指定模型为qwen-turbo-latest
-            prompt = f"请将以下日文小说内容翻译成中文，保持原文的语气和风格：\n\n{text}"
-            
-            # 增加重试机制
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    response = dashscope.Generation.call(
-                        model='qwen-turbo-latest',
-                        prompt=prompt,
-                        # 增加超时时间
-                        timeout=60
-                    )
-                    
-                    if response.status_code == 200 and response.output and response.output.text:
-                        print("翻译完成")
-                        return response.output.text
-                    else:
-                        error_msg = response.message if response and response.message else "未知错误"
-                        print(f"翻译失败: {error_msg}")
-                        # 打印响应详情用于调试
-                        if hasattr(response, '__dict__'):
-                            print(f"响应详情: {response.__dict__}")
-                        # 如果不是最后一次尝试，等待后重试
-                        if attempt < max_retries - 1:
-                            print(f"第{attempt + 1}次尝试失败，等待5秒后重试...")
-                            time.sleep(5)
-                        else:
-                            print("所有重试都失败了，返回原文")
-                            return text
-                except Exception as e:
-                    print(f"第{attempt + 1}次翻译请求出错: {e}")
+        # 检查文本长度，如果超过4k则截断
+        max_length = 4000  # 4k限制
+        if len(text) > max_length:
+            print(f"文本长度 {len(text)} 超过4k限制，将截断到 {max_length} 字符")
+            text = text[:max_length]
+        
+        # 只取前1000个字符进行测试
+        test_text = text[:1000] + "..." if len(text) > 1000 else text
+        print(f"待翻译文本示例: {test_text}")
+        
+        # 根据模型名称选择不同的调用方法
+        if model_name == "qwen-mt-plus":
+            return translate_with_qwen_mt_plus(text)
+        else:
+            return translate_with_qwen_turbo(text, model_name)
+    else:
+        # 已经是中文或混合文本
+        print("内容已为中文，无需翻译")
+        return text
+
+
+def translate_with_qwen_mt_plus(text):
+    """使用qwen-mt-plus模型翻译文本"""
+    try:
+        messages = [
+            {
+                "role": "user",
+                "content": f"请将以下日文小说内容翻译成中文，保持原文的语气和风格：\n\n{text}"
+            }
+        ]
+        translation_options = {
+            "source_lang": "auto",
+            "target_lang": "Chinese"
+        }
+        
+        # 增加重试机制
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                completion = client.chat.completions.create(
+                    model="qwen-mt-plus",
+                    messages=messages,
+                    extra_body={
+                        "translation_options": translation_options
+                    },
+                    # 增加超时时间
+                    timeout=60
+                )
+                
+                if completion.choices and completion.choices[0].message.content:
+                    print("翻译完成")
+                    return completion.choices[0].message.content
+                else:
+                    error_msg = "未知错误"
+                    print(f"翻译失败: {error_msg}")
+                    # 如果不是最后一次尝试，等待后重试
                     if attempt < max_retries - 1:
-                        print("等待5秒后重试...")
+                        print(f"第{attempt + 1}次尝试失败，等待5秒后重试...")
                         time.sleep(5)
                     else:
                         print("所有重试都失败了，返回原文")
                         return text
-        else:
-            # 已经是中文或混合文本
-            print("内容已为中文，无需翻译")
-            return text
+            except Exception as e:
+                print(f"第{attempt + 1}次翻译请求出错: {e}")
+                if attempt < max_retries - 1:
+                    print("等待5秒后重试...")
+                    time.sleep(5)
+                else:
+                    print("所有重试都失败了，返回原文")
+                    return text
+    except Exception as e:
+        print(f"翻译过程中出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return text
+
+
+def translate_with_qwen_turbo(text, model_name):
+    """使用qwen-turbo模型翻译文本"""
+    try:
+        import dashscope
+        dashscope.api_key = DASHSCOPE_API_KEY
+        
+        # 使用标准Generation接口
+        prompt = f"请将以下日文小说内容翻译成中文，保持原文的语气和风格：\n\n{text}"
+        
+        # 增加重试机制
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = dashscope.Generation.call(
+                    model=model_name,
+                    prompt=prompt,
+                    # 增加超时时间
+                    timeout=60
+                )
+                
+                if response.status_code == 200 and response.output and response.output.text:
+                    print("翻译完成")
+                    return response.output.text
+                else:
+                    error_msg = response.message if response and response.message else "未知错误"
+                    print(f"翻译失败: {error_msg}")
+                    # 打印响应详情用于调试
+                    if hasattr(response, '__dict__'):
+                        print(f"响应详情: {response.__dict__}")
+                    # 如果不是最后一次尝试，等待后重试
+                    if attempt < max_retries - 1:
+                        print(f"第{attempt + 1}次尝试失败，等待5秒后重试...")
+                        time.sleep(5)
+                    else:
+                        print("所有重试都失败了，返回原文")
+                        return text
+            except Exception as e:
+                print(f"第{attempt + 1}次翻译请求出错: {e}")
+                if attempt < max_retries - 1:
+                    print("等待5秒后重试...")
+                    time.sleep(5)
+                else:
+                    print("所有重试都失败了，返回原文")
+                    return text
     except ImportError:
         print("未安装dashscope库，无法进行翻译")
         return text
@@ -278,6 +357,7 @@ def main():
     parser.add_argument('url', help='小说的目录页或章节页URL')
     parser.add_argument('--output', '-o', help='输出文件名')
     parser.add_argument('--range', '-r', help='章节范围，例如 "1-10" 表示第1到第10章，"5" 表示第5章')
+    parser.add_argument('--model', '-m', default=DEFAULT_MODEL, choices=['qwen-turbo-latest', 'qwen-mt-plus'], help='选择翻译模型')
     args = parser.parse_args()
     
     url = args.url
@@ -298,7 +378,7 @@ def main():
         if title and content:
             print(f"检测到章节语言...")
             # 使用新的语言检测函数
-            content = translate_to_chinese(content)
+            content = translate_to_chinese(content, args.model)
             
             # 生成默认文件名
             if args.output:
@@ -351,7 +431,7 @@ def main():
             if chapter_title and content:
                 print(f"检测到章节语言...")
                 # 使用新的语言检测函数
-                content = translate_to_chinese(content)
+                content = translate_to_chinese(content, args.model)
                 
                 chapters.append((chapter_title, content))
                 # 添加延时，避免请求过于频繁
