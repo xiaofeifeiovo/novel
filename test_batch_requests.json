@@ -1,0 +1,20 @@
+[
+  {
+    "action": "TranslateToChinese",
+    "id": "test_chapter_1",
+    "params": {
+      "text": "これはテスト用の日本語テキストです。翻訳が正しく動作することを確認してください。",
+      "source_lang": "ja",
+      "target_lang": "zh"
+    }
+  },
+  {
+    "action": "TranslateToChinese",
+    "id": "test_chapter_2",
+    "params": {
+      "text": "もう一つのテスト用テキストです。長めの文章も正しく翻訳できるか確認します。",
+      "source_lang": "ja",
+      "target_lang": "zh"
+    }
+  }
+]

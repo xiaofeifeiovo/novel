@@ -99,19 +99,11 @@ def translate_to_chinese(text, model_name=DEFAULT_MODEL):
     if likely_japanese or not has_chinese:
         print("开始翻译...")
         
-        # 检查文本长度，如果超过4k则按换行符截断
+        # 检查文本长度，如果超过4k则截断
         max_length = 4000  # 4k限制
         if len(text) > max_length:
-            print(f"文本长度 {len(text)} 超过4k限制，将按换行符截断到 {max_length} 字符以内")
-            # 按换行符截断，避免破坏文本结构
-            lines = text.split('\n')
-            truncated_text = ""
-            for line in lines:
-                if len(truncated_text) + len(line) + 1 <= max_length:
-                    truncated_text += line + "\n"
-                else:
-                    break
-            text = truncated_text.rstrip('\n')  # 移除末尾的换行符
+            print(f"文本长度 {len(text)} 超过4k限制，将截断到 {max_length} 字符")
+            text = text[:max_length]
         
         # 只取前1000个字符进行测试
         test_text = text[:1000] + "..." if len(text) > 1000 else text

@@ -68,22 +68,19 @@ python generate_batch_requests.py https://example.com/novel/catalog --model qwen
 ### 3. 发送批处理请求到阿里云百炼平台
 
 ```bash
-python send_batch_request.py <批处理请求文件> [--output OUTPUT_FILE] [--model MODEL]
+python send_batch_request.py <批处理请求文件> [--output OUTPUT_FILE]
 ```
 
 参数说明：
 
 - `batch_file`: 批处理请求文件
 - `--output`, `-o`: 输出响应结果文件名（默认为batch_response.json）
-- `--model`, `-m`: 选择翻译模型，可选值为 `qwen-turbo-latest` 或 `qwen-mt-plus`（默认）
 
 示例：
 
 ```bash
 python send_batch_request.py batch_requests.json
 python send_batch_request.py my_novel_requests.json --output my_novel_response.json
-python send_batch_request.py batch_requests.json --model qwen-turbo-latest
-python send_batch_request.py batch_requests.json --model qwen-mt-plus
 ```
 
 ## 环境变量
