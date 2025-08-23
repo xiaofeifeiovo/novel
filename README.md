@@ -8,7 +8,7 @@
 2. 如果是目录网址，从页面中提取各个章节的链接，如果是章节网址，跳到第3步
 3. 从章节链接网页中提取并下载小说章节的标题和内容
 4. 如果整合到一个.txt文件中
-5. 检查小说的语言，如果不是中文，使用qwen（具体模型名称为qwen-turbo）翻译为中文
+5. 检查小说的语言，如果不是中文，使用qwen翻译为中文
 
 ## 新增功能
 
@@ -28,15 +28,20 @@ python novel_downloader.py <小说目录页或章节页URL> [--output OUTPUT_FIL
 ```
 
 参数说明：
+
 - `url`: 小说的目录页或章节页URL
 - `--output`, `-o`: 输出文件名（可选）
 - `--range`, `-r`: 章节范围，例如 "1-10" 表示第1到第10章，"5" 表示第5章
+- `--model`, `-m`: 选择翻译模型，可选值为 `qwen-turbo-latest` 或 `qwen-mt-plus`（默认）
 
 示例：
+
 ```bash
 python novel_downloader.py https://example.com/novel/catalog
 python novel_downloader.py https://example.com/novel/catalog --range 1-10
 python novel_downloader.py https://example.com/novel/chapter/1
+python novel_downloader.py https://example.com/novel/catalog --model qwen-turbo-latest
+python novel_downloader.py https://example.com/novel/catalog --model qwen-mt-plus
 ```
 
 ### 2. 生成批处理请求文件
@@ -46,10 +51,12 @@ python generate_batch_requests.py <小说目录页URL> [--output OUTPUT_FILE]
 ```
 
 参数说明：
+
 - `url`: 小说的目录页URL
 - `--output`, `-o`: 输出批处理请求文件名（默认为batch_requests.json）
 
 示例：
+
 ```bash
 python generate_batch_requests.py https://example.com/novel/catalog
 python generate_batch_requests.py https://example.com/novel/catalog --output my_novel_requests.json
@@ -62,10 +69,12 @@ python send_batch_request.py <批处理请求文件> [--output OUTPUT_FILE]
 ```
 
 参数说明：
+
 - `batch_file`: 批处理请求文件
 - `--output`, `-o`: 输出响应结果文件名（默认为batch_response.json）
 
 示例：
+
 ```bash
 python send_batch_request.py batch_requests.json
 python send_batch_request.py my_novel_requests.json --output my_novel_response.json
@@ -80,6 +89,7 @@ export DASHSCOPE_API_KEY=your_api_key_here
 ```
 
 在Windows上：
+
 ```cmd
 set DASHSCOPE_API_KEY=your_api_key_here
 ```
@@ -89,8 +99,10 @@ set DASHSCOPE_API_KEY=your_api_key_here
 - requests
 - beautifulsoup4
 - dashscope
+- openai
 
 安装依赖：
+
 ```bash
-pip install requests beautifulsoup4 dashscope
+pip install requests beautifulsoup4 dashscope openai
 ```
