@@ -11,7 +11,7 @@ import os
 DASHSCOPE_API_KEY = os.getenv('DASHSCOPE_API_KEY')
 API_URL = "https://dashscope.aliyuncs.com/api/v1/services/translateto/chinese"
 
-def send_batch_request(batch_file, output_file):
+def send_batch_request(batch_file, output_file, model_name='qwen-mt-plus'):
     """发送批处理请求到阿里云百炼平台"""
     if not DASHSCOPE_API_KEY:
         print("错误: 未设置DASHSCOPE_API_KEY环境变量")
@@ -33,21 +33,34 @@ def send_batch_request(batch_file, output_file):
         "Content-Type": "application/json"
     }
     
-    # 构建批处理请求体
-    payload = {
-        "model": "qwen-turbo-latest",
-        "input": {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "你是一个专业的日文小说翻译者，请将以下日文小说内容翻译成中文，保持原文的语气和风格。"
-                }
-            ]
-        },
-        "parameters": {
-            "batch": batch_requests
+    # 根据模型类型构建批处理请求体
+    if model_name == 'qwen-mt-plus':
+        # qwen-mt-plus 模型不需要系统提示词
+        payload = {
+            "model": "qwen-mt-plus",
+            "input": {},
+            "parameters": {
+                "batch": batch_requests,
+                "source_lang": "auto",
+                "target_lang": "Chinese"
+            }
         }
-    }
+    else:
+        # qwen-turbo-latest 模型需要系统提示词
+        payload = {
+            "model": "qwen-turbo-latest",
+            "input": {
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "你是一个专业的日文小说翻译者，请将以下日文小说内容翻译成中文，保持原文的语气和风格。"
+                    }
+                ]
+            },
+            "parameters": {
+                "batch": batch_requests
+            }
+        }
     
     print("正在发送批处理请求...")
     
@@ -73,9 +86,10 @@ def main():
     parser = argparse.ArgumentParser(description='向阿里云百炼平台发送批处理翻译请求')
     parser.add_argument('batch_file', help='批处理请求文件')
     parser.add_argument('--output', '-o', default='batch_response.json', help='输出响应结果文件名')
+    parser.add_argument('--model', '-m', default='qwen-mt-plus', choices=['qwen-turbo-latest', 'qwen-mt-plus'], help='选择翻译模型')
     args = parser.parse_args()
     
-    send_batch_request(args.batch_file, args.output)
+    send_batch_request(args.batch_file, args.output, args.model)
 
 if __name__ == "__main__":
     main()

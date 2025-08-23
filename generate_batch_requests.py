@@ -110,6 +110,7 @@ def main():
     parser = argparse.ArgumentParser(description='生成小说章节翻译的批处理请求')
     parser.add_argument('url', help='小说的目录页URL')
     parser.add_argument('--output', '-o', default='batch_requests.json', help='输出批处理请求文件名')
+    parser.add_argument('--model', '-m', default='qwen-mt-plus', choices=['qwen-turbo-latest', 'qwen-mt-plus'], help='选择翻译模型')
     args = parser.parse_args()
     
     generate_batch_requests(args.url, args.output)
